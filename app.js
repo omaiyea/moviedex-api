@@ -1,3 +1,5 @@
+require('dotenv').config(); //to read environmental variables
+
 const express = require('express'); //express to work with http requests
 const morgan = require('morgan'); //logging
 const cors = require('cors'); //allow requests made to a different origin in a browser
@@ -11,7 +13,8 @@ const app = express(); //create express app
 app.use(morgan('dev')); 
 app.use(cors()); 
 app.use(helmet()); 
-//app.use(validateToken);
+app.use(validateToken);
+
 /*** endpoints ***/
 //movie endpoint allows for movies to be searched for by genre, country, or avg_vote query params
 //otherwise API will respond with an array of full movie entries
@@ -30,8 +33,21 @@ function handleGetMovies(req, res){
     res.status(200).json(results);
 }
 //endpoint only responds when given a valid auth header with a Bearer API token value
-/*function validateToken(req, res, next){
+function validateToken(req, res, next){
+    const apiToken = process.env.API_TOKEN;
+    const bearerToken = req.get('Authorization');
+
+    console.log(apiToken);
+
+    if(!bearerToken || !bearerToken.split(' ')[1]){ //check if authorization is supplied or if bearer authorization is supplied
+        return res.status(401).json({ error: 'Unauthorized request' });
+    }
     
-}*/
+    if(apiToken !== bearerToken.split(' ')[1]){
+        return res.status(401).json({ error: 'Unauthorized request' });
+    }
+
+    next();
+}
 
 module.exports = app; //allow other files to use app
